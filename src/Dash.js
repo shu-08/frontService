@@ -79,7 +79,7 @@ function DashboardLayoutBranding(props) {
       navigation={NAVIGATION}
       branding={{
         logo: <img src="https://mui.com/static/logo.png" alt="MUI logo" />,
-        title: 'TikTok Video Downloader',
+        title: 'TikTokDownload',
         homeUrl: '/toolpad/core/introduction',
       }}
       router={router}
