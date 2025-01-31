@@ -2,7 +2,7 @@ const API_BASE_URL = "https://backservice-oqui.onrender.com"; // RenderのFlask 
 
 export const downloadVideo = async (url) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/download`, {  // `/download` エンドポイントに変更
+        const response = await fetch("https://backservice-oqui.onrender.com", {  // `/download` エンドポイントに変更
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
