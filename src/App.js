@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 
 function App() {
   const [url, setUrl] = useState('');
-  const [downloadLink, setDownloadLink] = useState('');
   const [error, setError] = useState('');
 
   const handleDownload = async (e) => {
     e.preventDefault();
-    
+
     try {
       const response = await fetch('https://backservice-oqui.onrender.com/download', {
         method: 'POST',
@@ -17,12 +16,17 @@ function App() {
         body: JSON.stringify({ url }),
       });
 
-      const data = await response.json();
-
       if (response.ok) {
-        setDownloadLink(data.download_link);
+        // ダウンロードリンクを取得して、ブラウザで直接ファイルをダウンロード
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = 'downloaded_video'; // 任意のファイル名
+        a.click();
         setError('');
       } else {
+        const data = await response.json();
         setError(data.error || 'ダウンロードに失敗しました');
       }
     } catch (err) {
@@ -44,11 +48,6 @@ function App() {
         <button type="submit">ダウンロード</button>
       </form>
       {error && <div className="error">{error}</div>}
-      {downloadLink && (
-        <div className="download-link">
-          <p>ダウンロード完了: <a href={downloadLink} download>ここをクリックしてダウンロード</a></p>
-        </div>
-      )}
     </div>
   );
 }
