@@ -10,15 +10,19 @@ export const downloadVideo = async (url) => {
             body: new URLSearchParams({
                 url: url,
             }),
-            mode: "cors",  // CORSリクエストを明示的に設定
+            mode: "cors",
         });
 
         if (!response.ok) {
             throw new Error("APIエラー");
         }
 
-        // レスポンスがJSON形式であることを確認
-        const data = await response.json();
+        // レスポンス内容をまずテキストとして取得して、ログに出力
+        const textData = await response.text();
+        console.log("Response text:", textData);  // ここで内容を確認
+
+        // もしJSONとしてパースできる場合はJSONとして処理
+        const data = JSON.parse(textData);
 
         if (data.download_link) {
             return { downloadLink: data.download_link };  // ダウンロードリンクを返す
@@ -27,6 +31,6 @@ export const downloadVideo = async (url) => {
         }
     } catch (error) {
         console.error("Error downloading video:", error);
-        return { error: error.message };  // エラーを返す
+        return { error: error.message };
     }
 };
