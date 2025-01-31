@@ -1,38 +1,56 @@
-import React, { useState } from "react";
-import { downloadVideo } from "./api";
+import React, { useState } from 'react';
 
 function App() {
-    const [url, setUrl] = useState("");
-    const [downloadLink, setDownloadLink] = useState(null);
-    const [error, setError] = useState(null);
+  const [url, setUrl] = useState('');
+  const [downloadLink, setDownloadLink] = useState('');
+  const [error, setError] = useState('');
 
-    const handleDownload = async () => {
-        try {
-            const result = await downloadVideo(url);
-            if (result?.download_link) {
-                setDownloadLink(result.download_link);
-            } else {
-                setError("ダウンロードに失敗しました。");
-            }
-        } catch (error) {
-            setError("ダウンロード中にエラーが発生しました。");
-        }
-    };
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('https://your-backend-url.com/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      });
 
-    return (
-        <div>
-            <h1>React + Flask 動画ダウンロード</h1>
-            <input
-                type="text"
-                placeholder="動画のURLを入力"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-            />
-            <button onClick={handleDownload}>ダウンロード</button>
-            {downloadLink && <a href={downloadLink} download>ダウンロードリンク</a>}
-            {error && <p>{error}</p>}
+      const data = await response.json();
+
+      if (response.ok) {
+        setDownloadLink(data.download_link);
+        setError('');
+      } else {
+        setError(data.error || 'ダウンロードに失敗しました');
+      }
+    } catch (err) {
+      setError('ネットワークエラーが発生しました');
+    }
+  };
+
+  return (
+    <div>
+      <h1>YouTube Video Downloader</h1>
+      <form onSubmit={handleDownload}>
+        <input 
+          type="text" 
+          value={url} 
+          onChange={(e) => setUrl(e.target.value)} 
+          placeholder="動画のURLを入力" 
+          required 
+        />
+        <button type="submit">ダウンロード</button>
+      </form>
+      {error && <div className="error">{error}</div>}
+      {downloadLink && (
+        <div className="download-link">
+          <p>ダウンロード完了: <a href={downloadLink} download>ここをクリックしてダウンロード</a></p>
         </div>
-    );
+      )}
+    </div>
+  );
 }
 
 export default App;
