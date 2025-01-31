@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box'; // Box コンポーネントをインポート
+import { Box, Button, TextField, Backdrop, CircularProgress, Typography } from '@mui/material';
 
 function VideoDownload() {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false); // クルクル状態を追加
+  const [extraFields, setExtraFields] = useState([]); // 新しいテキストボックスを追加するためのステート
 
   const handleDownload = async (e) => {
     e.preventDefault();
@@ -40,11 +37,16 @@ function VideoDownload() {
     }
   };
 
+  // 新しいテキストボックスを追加する関数
+  const addTextField = () => {
+    setExtraFields([...extraFields, '']); // 新しいフィールドを追加
+  };
+
   return (
     <div>
       <form onSubmit={handleDownload}>
-        {/* Box コンポーネントで横並びに */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {/* Box コンポーネントで縦並びに */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField 
             type="text" 
             value={url} 
@@ -52,15 +54,11 @@ function VideoDownload() {
             placeholder="動画のURLを入力" 
             required 
             variant="outlined"
-            fullWidth
+            sx={{
+              width: '300px', // テキストボックスの幅を調整
+              height: '56px', // 高さをボタンと同じにする
+            }}
           />
-          <Button 
-            variant="contained" 
-            onClick={handleDownload} 
-            disabled={isLoading}
-          >
-            {isLoading ? 'ダウンロード中...' : 'ダウンロード'}
-          </Button>
         </Box>
       </form>
 
@@ -69,7 +67,50 @@ function VideoDownload() {
         <CircularProgress color="inherit" />
       </Backdrop>
 
+      {/* ダウンロード後に新しいテキストボックスを表示 */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: '16px' }}>
+        {extraFields.map((_, index) => (
+          <TextField 
+            key={index}
+            type="text"
+            placeholder={`追加のURL ${index + 1}`}
+            variant="outlined"
+            sx={{
+              width: '300px',
+              height: '56px',
+            }}
+          />
+        ))}
+      </Box>
+
+      {/* エラーメッセージ */}
       {error && <div className="error">{error}</div>}
+
+      {/* ボタンを押した後にテキストボックスを追加 */}
+      <Box sx={{ display: 'flex', gap: 2, marginTop: '16px' }}>
+        <Button 
+          variant="outlined" 
+          onClick={addTextField} 
+          sx={{
+            height: '40px',
+            width: '140px', // ボタンの高さをテキストボックスと同じにする
+          }}
+        >
+          URLを追加
+        </Button>
+        <Button 
+          variant="contained" 
+          size="large" 
+          onClick={handleDownload} 
+          disabled={isLoading}
+          sx={{
+            height: '40px',
+            width: '140px', // ボタンの高さをテキストボックスと同じにする
+          }}
+        >
+          {isLoading ? 'ダウンロード中...' : 'ダウンロード'}
+        </Button>
+      </Box>
     </div>
   );
 }
