@@ -1,55 +1,37 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Backdrop, CircularProgress, Typography, Link } from '@mui/material';
+import { Box, Button, TextField, Backdrop, CircularProgress } from '@mui/material';
 
 function VideoDownload() {
-  const [urls, setUrls] = useState(['']); // URLのリスト
+  const [urls, setUrls] = useState(['']); // URLを配列で管理
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [downloadLinks, setDownloadLinks] = useState([]); // 各動画のダウンロードリンクを格納
+  const [downloadLinks, setDownloadLinks] = useState([]); // ダウンロードリンクを保存
 
-  // URL変更時に配列を更新する関数
   const handleChange = (index, value) => {
     const newUrls = [...urls];
     newUrls[index] = value;
     setUrls(newUrls);
   };
 
-  // ダウンロード処理（複数URLを個別に処理）
   const handleDownload = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setDownloadLinks([]); // 前回のリンクをクリア
+    setError('');
+    setDownloadLinks([]); // リンクをリセット
 
     try {
-      const newDownloadLinks = [];
+      const response = await fetch('https://backservice-oqui.onrender.com/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls }), // 複数のURLを送信
+      });
 
-      for (const url of urls) {
-        if (!url.trim()) continue; // 空のURLは無視
-
-        const response = await fetch('https://backservice-oqui.onrender.com/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
-        });
-
-        if (response.ok) {
-          const blob = await response.blob();
-          const downloadUrl = window.URL.createObjectURL(blob);
-          newDownloadLinks.push({ url, downloadUrl });
-
-          // 自動でダウンロード開始
-          const a = document.createElement('a');
-          a.href = downloadUrl;
-          a.download = `video_${newDownloadLinks.length}.mp4`; // 動画ごとに異なる名前を付与
-          a.click();
-        } else {
-          const data = await response.json();
-          setError(data.error || 'ダウンロードに失敗しました');
-        }
+      const data = await response.json();
+      if (response.ok) {
+        setDownloadLinks(data.download_links);
+      } else {
+        setError(data.error || 'ダウンロードに失敗しました');
       }
-
-      setDownloadLinks(newDownloadLinks);
-      setError('');
     } catch (err) {
       setError('ネットワークエラーが発生しました');
     } finally {
@@ -57,7 +39,6 @@ function VideoDownload() {
     }
   };
 
-  // 新しいテキストボックスを追加する関数
   const addTextField = () => {
     setUrls([...urls, '']);
   };
@@ -81,44 +62,33 @@ function VideoDownload() {
         </Box>
       </form>
 
-      {/* クルクルをダウンロード中のみ表示 */}
       <Backdrop sx={{ color: '#fff', zIndex: 1300 }} open={isLoading}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      {/* エラーメッセージ */}
-      {error && <Typography color="error">{error}</Typography>}
+      {error && <div className="error">{error}</div>}
 
-      {/* ダウンロードリンクの表示（複数対応） */}
+      {/* ダウンロードリンクの表示 */}
       {downloadLinks.length > 0 && (
-        <Box sx={{ marginTop: 2 }}>
-          <Typography variant="h6">ダウンロードリンク</Typography>
-          {downloadLinks.map((link, index) => (
-            <Typography key={index}>
-              <Link href={link.downloadUrl} download={`video_${index + 1}.mp4`}>
-                {`動画 ${index + 1} をダウンロード`}
-              </Link>
-            </Typography>
-          ))}
-        </Box>
+        <div>
+          <h3>ダウンロードリンク</h3>
+          <ul>
+            {downloadLinks.map((link, index) => (
+              <li key={index}>
+                <a href={link} download>
+                  動画 {index + 1} をダウンロード
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
-      {/* ボタンを横並びに配置 */}
       <Box sx={{ display: 'flex', gap: 2, marginTop: '16px' }}>
-        <Button 
-          variant="outlined" 
-          onClick={addTextField} 
-          sx={{ height: '40px', width: '140px' }}
-        >
+        <Button variant="outlined" onClick={addTextField} sx={{ height: '40px', width: '140px' }}>
           URLを追加
         </Button>
-        <Button 
-          variant="contained" 
-          size="large" 
-          onClick={handleDownload} 
-          disabled={isLoading}
-          sx={{ height: '40px', width: '140px' }}
-        >
+        <Button variant="contained" size="large" onClick={handleDownload} disabled={isLoading} sx={{ height: '40px', width: '140px' }}>
           {isLoading ? 'ダウンロード中...' : 'ダウンロード'}
         </Button>
       </Box>
