@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Backdrop, CircularProgress } from '@mui/material';
+import { Box, Button, TextField, Backdrop, CircularProgress, Typography, Link } from '@mui/material';
 
 function VideoDownload() {
-  const [urls, setUrls] = useState(['']); // URLを配列で管理（最初のURLを含める）
+  const [urls, setUrls] = useState(['']); // URLのリスト
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // クルクル状態を追加
+  const [isLoading, setIsLoading] = useState(false);
+  const [downloadLinks, setDownloadLinks] = useState([]); // 各動画のダウンロードリンクを格納
 
   // URL変更時に配列を更新する関数
   const handleChange = (index, value) => {
@@ -13,14 +14,17 @@ function VideoDownload() {
     setUrls(newUrls);
   };
 
-  // ダウンロード処理
+  // ダウンロード処理（複数URLを個別に処理）
   const handleDownload = async (e) => {
     e.preventDefault();
-    setIsLoading(true); // クルクルを表示
+    setIsLoading(true);
+    setDownloadLinks([]); // 前回のリンクをクリア
 
     try {
+      const newDownloadLinks = [];
+
       for (const url of urls) {
-        if (!url.trim()) continue; // 空のURLはスキップ
+        if (!url.trim()) continue; // 空のURLは無視
 
         const response = await fetch('https://backservice-oqui.onrender.com/download', {
           method: 'POST',
@@ -31,23 +35,29 @@ function VideoDownload() {
         if (response.ok) {
           const blob = await response.blob();
           const downloadUrl = window.URL.createObjectURL(blob);
+          newDownloadLinks.push({ url, downloadUrl });
+
+          // 自動でダウンロード開始
           const a = document.createElement('a');
           a.href = downloadUrl;
-          a.download = 'downloaded_video'; // 任意のファイル名
+          a.download = `video_${newDownloadLinks.length}.mp4`; // 動画ごとに異なる名前を付与
           a.click();
         } else {
           const data = await response.json();
           setError(data.error || 'ダウンロードに失敗しました');
         }
       }
+
+      setDownloadLinks(newDownloadLinks);
+      setError('');
     } catch (err) {
       setError('ネットワークエラーが発生しました');
     } finally {
-      setIsLoading(false); // クルクルを非表示
+      setIsLoading(false);
     }
   };
 
-  // 新しいテキストボックスを追加
+  // 新しいテキストボックスを追加する関数
   const addTextField = () => {
     setUrls([...urls, '']);
   };
@@ -77,7 +87,21 @@ function VideoDownload() {
       </Backdrop>
 
       {/* エラーメッセージ */}
-      {error && <div className="error">{error}</div>}
+      {error && <Typography color="error">{error}</Typography>}
+
+      {/* ダウンロードリンクの表示（複数対応） */}
+      {downloadLinks.length > 0 && (
+        <Box sx={{ marginTop: 2 }}>
+          <Typography variant="h6">ダウンロードリンク</Typography>
+          {downloadLinks.map((link, index) => (
+            <Typography key={index}>
+              <Link href={link.downloadUrl} download={`video_${index + 1}.mp4`}>
+                {`動画 ${index + 1} をダウンロード`}
+              </Link>
+            </Typography>
+          ))}
+        </Box>
+      )}
 
       {/* ボタンを横並びに配置 */}
       <Box sx={{ display: 'flex', gap: 2, marginTop: '16px' }}>
